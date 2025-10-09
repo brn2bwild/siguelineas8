@@ -2,16 +2,7 @@
 #include "TB6612.h"
 
 #define leds 13
-
 #define qtrLeds 11
-#define pwmA 5
-#define ain1 9  // 5 motor derecho conector B
-#define ain2 4  // 4 motor derecho conector A
-
-#define pwmB 6
-#define bin1 7  // 7
-#define bin2 6  // 8
-
 #define boton 12
 
 const uint8_t cantidad_sensores = 8;
@@ -56,77 +47,19 @@ void setup() {
   delay(1000);
 }
 
-// void motorIzquierdo(int valor) {
-//   if (valor >= 0) {
-//     digitalWrite(ain1, LOW);
-//     digitalWrite(ain2, HIGH);
-//   } else {
-//     digitalWrite(ain1, HIGH);
-//     digitalWrite(ain2, LOW);
-//     valor *= -1;
-//   }
-//   analogWrite(pwmA, valor);
-// }
-
-// void motorDerecho(int valor) {
-//   if (valor >= 0) {
-//     digitalWrite(bin1, LOW);
-//     digitalWrite(bin2, HIGH);
-//   } else {
-//     digitalWrite(bin1, HIGH);
-//     digitalWrite(bin2, LOW);
-//     valor *= -1;
-//   }
-//   analogWrite(pwmB, valor);
-// }
-
-// void freno(bool izquierdo, bool derecho, int valor) {
-//   if (izquierdo) {
-//     digitalWrite(ain1, HIGH);
-//     digitalWrite(ain2, HIGH);
-//     analogWrite(pwmA, valor);
-//   }
-//   if (derecho) {
-//     digitalWrite(bin1, HIGH);
-//     digitalWrite(bin2, HIGH);
-//     analogWrite(pwmB, valor);
-//   }
-// }
-
-// void motor(int izquierda, int derecha) {
-//   motorIzquierdo(izquierda);
-//   motorDerecho(derecha);
-// }
-
-//con ésta velocidad los valores son p = 0.025, i = 0.0, d = 0.385
-//int velocidad_maxima = 255;
-
 //---------- estas constantes son por si la pista tiene muchas curvas
-// const float kp = 0.137;  //0.047 proporcional ----> 0.67 jalo chido   0.107 jalo mas chido
-// const float kp = 0.127;
-// // const float ki = 0.02;    //integral ------> 0.0 jalo chido
-// const float ki = 0.0;
-// const float kd = 0.645;  //0.645 derivativo -------0.645 jalo chido
-const float kp = 0.07;  // 0.07 con velocidad de 200
-// const float ki = 0.02;    //integral ------> 0.0 jalo chido
+const float kp = 0.07;   // 0.07 con velocidad de 200
 const float ki = 0.000;  //0 con velocidad de 200
 const float kd = 0.645;  //0.645 con velocidad de 200
 
-
 // velocidad del sigue líneas
-//int velocidad_maxima = 180;
-// const float kp = 0.047; //0.047 proporcional
-// const float ki = 0.0;    //integral
-// const float kd = 0.800;//0.645 derivativo
-
-// velocidad del sigue líneas
-const int velocidad_maxima = 60;  // 230 de velocidad funcional
+const int velocidad_maxima = 40;  // 230 de velocidad funcional
 
 int proporcional = 0;
 int integral = 0;
 int derivativo = 0;
 
-long error;
+long diferencial;
 int ultimo_proporcional;
 int objetivo = 3500;
 
@@ -136,9 +69,8 @@ int vel_motor_derecho;
 void loop() {
   unsigned int position = qtr.readLineBlack(SenIR);
 
-  // // Esta parte sirve para comprobar que los sensores están leyendo correctamente
+  /* Esta parte sirve para comprobar que los sensores están leyendo correctamente */
   // qtr.read(SenIR);
-
   // for(int i = 0; i < 8; i++){
   //   Serial.print(SenIR[i]);
   //   Serial.print('\t');
@@ -147,6 +79,7 @@ void loop() {
 
   proporcional = ((int)position) - 3500;
 
+  /* Estas líneas hacen falta para implementar el freno en las curvas más complicadas*/
   // if (proporcional <= -objetivo) {
   //   //  motorIzquierdo(0);
   //   //  freno(true, false, 200);
@@ -163,24 +96,20 @@ void loop() {
 
   ultimo_proporcional = proporcional;
 
-  error = (proporcional * kp) + (integral * ki) + (derivativo * kd);
+  diferencial = (proporcional * kp) + (integral * ki) + (derivativo * kd);
 
-  vel_motor_izquierdo = velocidad_maxima - error;
-  vel_motor_derecho = velocidad_maxima + error;
+  vel_motor_izquierdo = constrain(velocidad_maxima - diferencial, -velocidad_maxima, velocidad_maxima);
+  vel_motor_derecho = constrain(velocidad_maxima + diferencial, -velocidad_maxima, velocidad_maxima);
 
-  if (vel_motor_izquierdo < 0) vel_motor_izquierdo = 0;
-  else if (vel_motor_izquierdo > velocidad_maxima) vel_motor_izquierdo = velocidad_maxima;
-
-  if (vel_motor_derecho < 0) vel_motor_derecho = 0;
-  else if (vel_motor_derecho > velocidad_maxima) vel_motor_derecho = velocidad_maxima;
-
-  Serial.print("vel izq: ");
-  Serial.print(vel_motor_izquierdo);
-  Serial.print(", vel der: ");
-  Serial.print(vel_motor_derecho);
-  Serial.print(", proportional: ");
-  Serial.println(proporcional);
-
-  // puenteh.motores(0, 0);
   puenteh.motores(vel_motor_izquierdo, vel_motor_derecho);
+
+  /* Esta parte sirve para comprobar los valores de las velocidades */
+  // Serial.print("vel izq: ");
+  // Serial.print(vel_motor_izquierdo);
+  // Serial.print(", vel der: ");
+  // Serial.print(vel_motor_derecho);
+  // Serial.print(", proportional: ");
+  // Serial.print(proporcional);
+  // Serial.print(", diferencial: ");
+  // Serial.println(diferencial);
 }

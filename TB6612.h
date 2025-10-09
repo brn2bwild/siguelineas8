@@ -11,8 +11,10 @@ public:
   const int bin2 = 8;
   const int pwmB = 6;
   void begin();
+  void motorIzq(int velocidad);
+  void motorDer(int velocidad);
   void motores(int velIzq, int velDer);
-  void freno(bool motorIzq, bool motorDer);
+  void freno(bool motorIzq, bool motorDer, int velocidad);
 private:
 };
 
