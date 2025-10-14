@@ -5,6 +5,9 @@
 #define qtrLeds 11
 #define boton 12
 
+/* Descomentar esta línea para debuggear el código*/
+// #define DEBUG
+
 QTRSensors qtr;
 TB6612 puenteh;
 
