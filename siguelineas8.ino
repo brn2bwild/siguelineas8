@@ -5,11 +5,33 @@
 #define qtrLeds 11
 #define boton 12
 
+QTRSensors qtr;
+TB6612 puenteh;
+
 const uint8_t cantidad_sensores = 8;
 uint16_t SenIR[cantidad_sensores];
 
-QTRSensors qtr;
-TB6612 puenteh;
+/* Estas constantes son por si la pista tiene muchas curvas */
+const float kp = 0.1;   // 0.07 con velocidad de 200
+const float ki = 0.0;  //0 con velocidad de 200
+const float kd = 0.0;  //0.645 con velocidad de 200
+
+/* Valores máximos para el diferencial */
+const int diferencial_maximo = 255;
+
+/* Velocidad del sigue líneas */
+const int velocidad_maxima = 20;  // 230 de velocidad funcional
+
+int proporcional = 0;
+int integral = 0;
+int derivativo = 0;
+
+long diferencial;
+int ultimo_proporcional;
+int objetivo = 3500;
+
+int vel_motor_izquierdo;
+int vel_motor_derecho;
 
 void setup() {
   pinMode(boton, INPUT);
@@ -46,29 +68,6 @@ void setup() {
 
   delay(1000);
 }
-
-//---------- estas constantes son por si la pista tiene muchas curvas
-const float kp = 0.07;   // 0.07 con velocidad de 200
-const float ki = 0.000;  //0 con velocidad de 200
-const float kd = 0.645;  //0.645 con velocidad de 200
-
-// valores máximos para el diferencial
-const int diferencial_maximo = 255;
-
-// velocidad del sigue líneas
-const int velocidad_maxima = 20;  // 230 de velocidad funcional
-
-int proporcional = 0;
-int integral = 0;
-int derivativo = 0;
-
-long diferencial;
-int ultimo_proporcional;
-int objetivo = 3500;
-
-int vel_motor_izquierdo;
-int vel_motor_derecho;
-
 
 void loop() {
   unsigned int position = qtr.readLineBlack(SenIR);
@@ -107,15 +106,19 @@ void loop() {
   vel_motor_izquierdo = constrain(velocidad_maxima - diferencial, -velocidad_maxima, velocidad_maxima);
   vel_motor_derecho = constrain(velocidad_maxima + diferencial, -velocidad_maxima, velocidad_maxima);
 
+#ifndef DEBUG
   puenteh.motores(vel_motor_izquierdo, vel_motor_derecho);
+#endif
 
+#ifdef DEBUG
   /* Esta parte sirve para comprobar los valores de las velocidades */
-  // Serial.print("vel izq: ");
-  // Serial.print(vel_motor_izquierdo);
-  // Serial.print(", vel der: ");
-  // Serial.print(vel_motor_derecho);
-  // Serial.print(", proportional: ");
-  // Serial.print(proporcional);
-  // Serial.print(", diferencial: ");
-  // Serial.println(diferencial);
+  Serial.print("vel izq: ");
+  Serial.print(vel_motor_izquierdo);
+  Serial.print(", vel der: ");
+  Serial.print(vel_motor_derecho);
+  Serial.print(", proportional: ");
+  Serial.print(proporcional);
+  Serial.print(", diferencial: ");
+  Serial.println(diferencial);
+#endif
 }
