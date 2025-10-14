@@ -52,8 +52,11 @@ const float kp = 0.07;   // 0.07 con velocidad de 200
 const float ki = 0.000;  //0 con velocidad de 200
 const float kd = 0.645;  //0.645 con velocidad de 200
 
+// valores máximos para el diferencial
+const int diferencial_maximo = 255;
+
 // velocidad del sigue líneas
-const int velocidad_maxima = 40;  // 230 de velocidad funcional
+const int velocidad_maxima = 20;  // 230 de velocidad funcional
 
 int proporcional = 0;
 int integral = 0;
@@ -65,6 +68,7 @@ int objetivo = 3500;
 
 int vel_motor_izquierdo;
 int vel_motor_derecho;
+
 
 void loop() {
   unsigned int position = qtr.readLineBlack(SenIR);
@@ -90,13 +94,15 @@ void loop() {
   //   puenteh.motores(255, 0);
   // }
 
-  integral += ultimo_proporcional;
-
   derivativo = proporcional - ultimo_proporcional;
+
+  integral += ultimo_proporcional;
 
   ultimo_proporcional = proporcional;
 
   diferencial = (proporcional * kp) + (integral * ki) + (derivativo * kd);
+
+  diferencial = constrain(diferencial, -diferencial_maximo, diferencial_maximo);
 
   vel_motor_izquierdo = constrain(velocidad_maxima - diferencial, -velocidad_maxima, velocidad_maxima);
   vel_motor_derecho = constrain(velocidad_maxima + diferencial, -velocidad_maxima, velocidad_maxima);

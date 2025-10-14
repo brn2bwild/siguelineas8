@@ -2,16 +2,15 @@
 #include "TB6612.h"
 
 void TB6612::begin() {
-  pinMode(ain1, OUTPUT);
-  pinMode(ain2, OUTPUT);
   pinMode(pwmA, OUTPUT);
-  
-  pinMode(bin1, OUTPUT);
-  pinMode(bin2, OUTPUT);
   pinMode(pwmB, OUTPUT);
-
   analogWrite(pwmA, 0);
   analogWrite(pwmB, 0);
+
+  pinMode(ain1, OUTPUT);
+  pinMode(ain2, OUTPUT);
+  pinMode(bin1, OUTPUT);
+  pinMode(bin2, OUTPUT);
 
   digitalWrite(ain1, LOW);
   digitalWrite(ain2, LOW);
@@ -48,15 +47,13 @@ void TB6612::motores(int velIzq, int velDer) {
   motorDer(velDer);
 }
 
-void TB6612::freno(bool motorIzq, bool motorDer, int velocidad) {
-  if (motorIzq) {
-    digitalWrite(ain1, LOW);
-    digitalWrite(ain2, LOW);
-    analogWrite(pwmA, velocidad);
+void TB6612::freno(bool mIzq, bool mDer, int velocidad) {
+  if (mIzq) {
+    motorIzq((-1) * velocidad);
+    motorDer(velocidad);
   }
-  if (motorDer) {
-    digitalWrite(bin1, LOW);
-    digitalWrite(bin2, LOW);
-    analogWrite(pwmB, velocidad);
+  if (mDer) {
+    motorIzq(velocidad);
+    motorDer((-1) * velocidad);
   }
 }

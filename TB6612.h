@@ -10,6 +10,7 @@ public:
   const int bin1 = 7;
   const int bin2 = 8;
   const int pwmB = 6;
+
   void begin();
   void motorIzq(int velocidad);
   void motorDer(int velocidad);
