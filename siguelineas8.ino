@@ -23,7 +23,7 @@ const float kd = 0.0;  //0.645 con velocidad de 200
 const int diferencial_maximo = 255;
 
 /* Velocidad del sigue líneas */
-const int velocidad_maxima = 20;  // 230 de velocidad funcional
+const int velocidad_maxima = 60;  // 230 de velocidad funcional
 
 int proporcional = 0;
 int integral = 0;

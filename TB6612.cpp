@@ -19,25 +19,25 @@ void TB6612::begin() {
 }
 
 void TB6612::motorIzq(int velocidad) {
-  if (velocidad <= 0) {
-    digitalWrite(ain1, LOW);
-    digitalWrite(ain2, HIGH);
-    analogWrite(pwmA, velocidad);
-  } else {
+  if (velocidad >= 0) {
     digitalWrite(ain1, HIGH);
     digitalWrite(ain2, LOW);
+    analogWrite(pwmA, velocidad);
+  } else {
+    digitalWrite(ain1, LOW);
+    digitalWrite(ain2, HIGH);
     analogWrite(pwmA, (-1) * velocidad);
   }
 }
 
 void TB6612::motorDer(int velocidad) {
-  if (velocidad <= 0) {
-    digitalWrite(bin1, LOW);
-    digitalWrite(bin2, HIGH);
-    analogWrite(pwmB, velocidad);
-  } else {
+  if (velocidad >= 0) {
     digitalWrite(bin1, HIGH);
     digitalWrite(bin2, LOW);
+    analogWrite(pwmB, velocidad);
+  } else {
+    digitalWrite(bin1, LOW);
+    digitalWrite(bin2, HIGH);
     analogWrite(pwmB, (-1) * velocidad);
   }
 }
