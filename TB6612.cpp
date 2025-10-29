@@ -18,7 +18,7 @@ void TB6612::begin() {
   digitalWrite(bin2, LOW);
 }
 
-void TB6612::motorIzq(int velocidad) {
+void TB6612::motorIzq(uint8_t velocidad) {
   if (velocidad >= 0) {
     digitalWrite(ain1, HIGH);
     digitalWrite(ain2, LOW);
@@ -30,7 +30,7 @@ void TB6612::motorIzq(int velocidad) {
   }
 }
 
-void TB6612::motorDer(int velocidad) {
+void TB6612::motorDer(uint8_t velocidad) {
   if (velocidad >= 0) {
     digitalWrite(bin1, HIGH);
     digitalWrite(bin2, LOW);
@@ -42,17 +42,16 @@ void TB6612::motorDer(int velocidad) {
   }
 }
 
-void TB6612::motores(int velIzq, int velDer) {
+void TB6612::motores(uint8_t velIzq, uint8_t velDer) {
   motorIzq(velIzq);
   motorDer(velDer);
 }
 
-void TB6612::freno(bool mIzq, bool mDer, int velocidad) {
-  if (mIzq) {
+void TB6612::freno(bool sentido, uint8_t velocidad) {
+  if (sentido) {
     motorIzq((-1) * velocidad);
     motorDer(velocidad);
-  }
-  if (mDer) {
+  } else {
     motorIzq(velocidad);
     motorDer((-1) * velocidad);
   }

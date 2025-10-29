@@ -1,73 +1,74 @@
 #include <QTRSensors.h>
 #include "TB6612.h"
 
-#define leds 13
-#define qtrLeds 11
-#define boton 12
+/* Constantes para el control de la placa*/
+#define LEDS 13
+#define QTR_LEDS 11
+#define BUTTON 12
 
 /* Descomentar esta línea para debuggear el código*/
 // #define DEBUG
 
+/* Estas constantes para el control PID */
+#define KP 0.1  // 0.07 con velocidad de 200
+#define KD 0.0  //0.645 con velocidad de 200
+#define KI 0.0  //0 con velocidad de 200
+#define SETPOINT 3500
+
+/* Velocidades del siguelíneas */
+#define MIN_SPEED 30
+#define MAX_SPEED 60  // 230 de velocidad funcional
+
+/* Valor para el adjust */
+#define MAX_ADJUST 255
+
+/* Cantidad de sensores de la tarjeta */
+#define SENSORS_NUM 8
+
 QTRSensors qtr;
 TB6612 puenteh;
 
-const uint8_t cantidad_sensores = 8;
-uint16_t SenIR[cantidad_sensores];
+/* Se declara el arreglo para los sensores */
+uint16_t SenIR[SENSORS_NUM];
 
-/* Estas constantes son por si la pista tiene muchas curvas */
-const float kp = 0.1;   // 0.07 con velocidad de 200
-const float ki = 0.0;  //0 con velocidad de 200
-const float kd = 0.0;  //0.645 con velocidad de 200
-
-/* Valores máximos para el diferencial */
-const int diferencial_maximo = 255;
-
-/* Velocidad del sigue líneas */
-const int velocidad_maxima = 60;  // 230 de velocidad funcional
-
-int proporcional = 0;
-int integral = 0;
-int derivativo = 0;
-
-long diferencial;
-int ultimo_proporcional;
-int objetivo = 3500;
-
-int vel_motor_izquierdo;
-int vel_motor_derecho;
+int error, last_error, integral, derivative, left_motor_speed, right_motor_speed;
 
 void setup() {
-  pinMode(boton, INPUT);
-  pinMode(qtrLeds, OUTPUT);
-  pinMode(leds, OUTPUT);
+  pinMode(BUTTON, INPUT);
+  pinMode(QTR_LEDS, OUTPUT);
+  pinMode(LEDS, OUTPUT);
 
-  digitalWrite(qtrLeds, HIGH);
+  digitalWrite(QTR_LEDS, HIGH);
 
+#ifndef DEBUG
   puenteh.begin();
+#endif
 
+#ifdef DEBUG
   Serial.begin(9600);
-  delay(100);
+  delay(10);
+#endif
 
   qtr.setTypeAnalog();
-  qtr.setSensorPins((const uint8_t[]){ A7, A0, A1, A2, A3, A4, A5, A6 }, cantidad_sensores);
+  qtr.setSensorPins((const uint8_t[]){ A7, A0, A1, A2, A3, A4, A5, A6 }, SENSORS_NUM);
   delay(500);
 
-  while (digitalRead(boton)) {
-    digitalWrite(leds, !digitalRead(leds));
+  while (digitalRead(BUTTON)) {
+    digitalWrite(LEDS, !digitalRead(LEDS));
     delay(500);
   }
 
   for (uint16_t i = 0; i < 120; i++) {
-    digitalWrite(leds, HIGH);
+    digitalWrite(LEDS, HIGH);
     delay(20);
     qtr.calibrate();
-    digitalWrite(leds, LOW);
+    digitalWrite(LEDS, LOW);
     delay(20);
   }
 
-  digitalWrite(leds, HIGH);
+  digitalWrite(LEDS, HIGH);
 
-  while (digitalRead(boton)) {};
+  while (digitalRead(BUTTON)) {};
 
   delay(1000);
 }
@@ -83,45 +84,45 @@ void loop() {
   // }
   // Serial.println(position);
 
-  proporcional = ((int)position) - 3500;
 
+  error = SETPOINT - position;
   /* Estas líneas hacen falta para implementar el freno en las curvas más complicadas*/
-  // if (proporcional <= -objetivo) {
+  // if (error <= -objetivo) {
   //   //  motorIzquierdo(0);
   //   //  freno(true, false, 200);
   //   puenteh.motores(0, 255);
-  // } else if (proporcional >= objetivo) {
+  // } else if (error >= objetivo) {
   //   //  motorDerecho(0);
   //   //  freno(false, true, 200);
   //   puenteh.motores(255, 0);
   // }
 
-  derivativo = proporcional - ultimo_proporcional;
+  derivative = error - last_error;
 
-  integral += ultimo_proporcional;
+  integral += error;
 
-  ultimo_proporcional = proporcional;
+  int adjust = (KP * error) + (KI * integral) + (KD * derivative);
 
-  diferencial = (proporcional * kp) + (integral * ki) + (derivativo * kd);
+  // adjust = constrain(adjust, -MAX_ADJUST, MAX_ADJUST);
 
-  diferencial = constrain(diferencial, -diferencial_maximo, diferencial_maximo);
+  left_motor_speed = constrain(MAX_SPEED - adjust, MIN_SPEED, MAX_SPEED);
+  right_motor_speed = constrain(MAX_SPEED + adjust, MIN_SPEED, MAX_SPEED);
 
-  vel_motor_izquierdo = constrain(velocidad_maxima - diferencial, -velocidad_maxima, velocidad_maxima);
-  vel_motor_derecho = constrain(velocidad_maxima + diferencial, -velocidad_maxima, velocidad_maxima);
+  last_error = error;
 
 #ifndef DEBUG
-  puenteh.motores(vel_motor_izquierdo, vel_motor_derecho);
+  puenteh.motores(left_motor_speed, right_motor_speed);
 #endif
 
 #ifdef DEBUG
   /* Esta parte sirve para comprobar los valores de las velocidades */
-  Serial.print("vel izq: ");
-  Serial.print(vel_motor_izquierdo);
-  Serial.print(", vel der: ");
-  Serial.print(vel_motor_derecho);
+  Serial.print("left speed: ");
+  Serial.print(left_motor_speed);
+  Serial.print(", right speef: ");
+  Serial.print(right_motor_speed);
   Serial.print(", proportional: ");
-  Serial.print(proporcional);
-  Serial.print(", diferencial: ");
-  Serial.println(diferencial);
+  Serial.print(error);
+  Serial.print(", adjust: ");
+  Serial.println(adjust);
 #endif
 }
