@@ -13,10 +13,10 @@ public:
   const uint8_t pwmB = 6;
 
   void begin();
-  void motorIzq(uint8_t velocidad);
-  void motorDer(uint8_t velocidad);
-  void motores(uint8_t velIzq, uint8_t velDer);
-  void freno(bool sentido, uint8_t velocidad);
+  void motorIzq(int velocidad);
+  void motorDer(int velocidad);
+  void motores(int velIzq, int velDer);
+  void freno(bool sentido, int velocidad);
 private:
 };
 

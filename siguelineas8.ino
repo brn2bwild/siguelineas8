@@ -10,17 +10,17 @@
 // #define DEBUG
 
 /* Estas constantes para el control PID */
-#define KP 0.1  // 0.07 con velocidad de 200
-#define KD 0.0  //0.645 con velocidad de 200
+#define KP 0.03  // 0.07 con velocidad de 200
 #define KI 0.0  //0 con velocidad de 200
+#define KD 0.4  //0.645 con velocidad de 200
 #define SETPOINT 3500
 
 /* Velocidades del siguelíneas */
-#define MIN_SPEED 30
-#define MAX_SPEED 60  // 230 de velocidad funcional
+#define MAX_SPEED 90  // 230 de velocidad funcional
+#define MIN_SPEED (-1)*MAX_SPEED
 
 /* Valor para el adjust */
-#define MAX_ADJUST 255
+#define MAX_PWM 255
 
 /* Cantidad de sensores de la tarjeta */
 #define SENSORS_NUM 8
@@ -31,7 +31,7 @@ TB6612 puenteh;
 /* Se declara el arreglo para los sensores */
 uint16_t SenIR[SENSORS_NUM];
 
-int error, last_error, integral, derivative, left_motor_speed, right_motor_speed;
+int error, last_error, integral, derivative, left_motor_speed, right_motor_speed, speed = 60;
 
 void setup() {
   pinMode(BUTTON, INPUT);
@@ -99,16 +99,17 @@ void loop() {
 
   derivative = error - last_error;
 
-  integral += error;
+  // integral += error;
 
-  int adjust = (KP * error) + (KI * integral) + (KD * derivative);
+  // integral = constrain(integral, 0, MAX_PWM);
 
-  // adjust = constrain(adjust, -MAX_ADJUST, MAX_ADJUST);
+  int adjust = (KP * error) + (KD * derivative);
 
-  left_motor_speed = constrain(MAX_SPEED - adjust, MIN_SPEED, MAX_SPEED);
-  right_motor_speed = constrain(MAX_SPEED + adjust, MIN_SPEED, MAX_SPEED);
-
+  // adjust = constrain(adjust, -MAX_PWM, MAX_PWM);
   last_error = error;
+
+  left_motor_speed = constrain(speed + adjust, MIN_SPEED, MAX_SPEED);
+  right_motor_speed = constrain(speed - adjust, MIN_SPEED, MAX_SPEED);
 
 #ifndef DEBUG
   puenteh.motores(left_motor_speed, right_motor_speed);
@@ -118,7 +119,7 @@ void loop() {
   /* Esta parte sirve para comprobar los valores de las velocidades */
   Serial.print("left speed: ");
   Serial.print(left_motor_speed);
-  Serial.print(", right speef: ");
+  Serial.print(", right speed: ");
   Serial.print(right_motor_speed);
   Serial.print(", proportional: ");
   Serial.print(error);
