@@ -7,13 +7,14 @@
 #define BUTTON 12
 
 /* Descomentar esta línea para debuggear el código*/
-// #define DEBUG
+#define DEBUG
 
 /* Estas constantes para el control PID */
 #define KP 0.03  // 0.07 con velocidad de 200
 #define KI 0.0  //0 con velocidad de 200
 #define KD 0.4  //0.645 con velocidad de 200
 #define SETPOINT 3500
+#define OBJECTIVE 3450
 
 /* Velocidades del siguelíneas */
 #define MAX_SPEED 90  // 230 de velocidad funcional
@@ -86,16 +87,13 @@ void loop() {
 
 
   error = SETPOINT - position;
+  
   /* Estas líneas hacen falta para implementar el freno en las curvas más complicadas*/
-  // if (error <= -objetivo) {
-  //   //  motorIzquierdo(0);
-  //   //  freno(true, false, 200);
-  //   puenteh.motores(0, 255);
-  // } else if (error >= objetivo) {
-  //   //  motorDerecho(0);
-  //   //  freno(false, true, 200);
-  //   puenteh.motores(255, 0);
-  // }
+  if (error <= -OBJECTIVE) {
+    puenteh.motores(-100, 100);
+  } else if (error >= OBJECTIVE) {
+    puenteh.motores(100, -100);
+  }
 
   derivative = error - last_error;
 
@@ -121,7 +119,7 @@ void loop() {
   Serial.print(left_motor_speed);
   Serial.print(", right speed: ");
   Serial.print(right_motor_speed);
-  Serial.print(", proportional: ");
+  Serial.print(", error: ");
   Serial.print(error);
   Serial.print(", adjust: ");
   Serial.println(adjust);
