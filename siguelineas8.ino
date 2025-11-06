@@ -11,16 +11,17 @@
 
 /* Estas constantes para el control PID */
 #define KP 0.03  // 0.07 con velocidad de 200
-#define KI 0.0  //0 con velocidad de 200
-#define KD 0.4  //0.645 con velocidad de 200
+#define KI 0.0   //0 con velocidad de 200
+#define KD 0.4   //0.645 con velocidad de 200
 #define SETPOINT 3500
 #define OBJECTIVE 3450
 
 /* Velocidades del siguelíneas */
-#define MAX_SPEED 90  // 230 de velocidad funcional
-#define MIN_SPEED (-1)*MAX_SPEED
+#define MAX_SPEED 140  // 230 de velocidad funcional
+#define MIN_SPEED (-1) * MAX_SPEED
+#define BRAKE_SPEED 140
 
-/* Valor para el adjust */
+/* Valor para el diff */
 #define MAX_PWM 255
 
 /* Cantidad de sensores de la tarjeta */
@@ -32,7 +33,7 @@ TB6612 puenteh;
 /* Se declara el arreglo para los sensores */
 uint16_t SenIR[SENSORS_NUM];
 
-int error, last_error, integral, derivative, left_motor_speed, right_motor_speed, speed = 60;
+int error, last_error, integral, derivative, left_motor_speed, right_motor_speed;
 
 void setup() {
   pinMode(BUTTON, INPUT);
@@ -87,13 +88,15 @@ void loop() {
 
 
   error = SETPOINT - position;
-  
-  /* Estas líneas hacen falta para implementar el freno en las curvas más complicadas*/
+
+/* Estas líneas hacen falta para implementar el freno en las curvas más complicadas*/
+#ifndef DEBUG
   if (error <= -OBJECTIVE) {
-    puenteh.motores(-100, 100);
+    puenteh.motores(-BRAKE_SPEED, BRAKE_SPEED);
   } else if (error >= OBJECTIVE) {
-    puenteh.motores(100, -100);
+    puenteh.motores(BRAKE_SPEED, -BRAKE_SPEED);
   }
+#endif
 
   derivative = error - last_error;
 
@@ -101,27 +104,27 @@ void loop() {
 
   // integral = constrain(integral, 0, MAX_PWM);
 
-  int adjust = (KP * error) + (KD * derivative);
+  int diff = (KP * error) + (KD * derivative);
 
-  // adjust = constrain(adjust, -MAX_PWM, MAX_PWM);
+  // diff = constrain(diff, -MAX_PWM, MAX_PWM);
   last_error = error;
 
-  left_motor_speed = constrain(speed + adjust, MIN_SPEED, MAX_SPEED);
-  right_motor_speed = constrain(speed - adjust, MIN_SPEED, MAX_SPEED);
+  left_motor_speed = constrain(MAX_SPEED + diff, MIN_SPEED, MAX_SPEED);
+  right_motor_speed = constrain(MAX_SPEED - diff, MIN_SPEED, MAX_SPEED);
 
 #ifndef DEBUG
   puenteh.motores(left_motor_speed, right_motor_speed);
 #endif
 
-#ifdef DEBUG
   /* Esta parte sirve para comprobar los valores de las velocidades */
-  Serial.print("left speed: ");
+#ifdef DEBUG
+  Serial.print("error: ");
+  Serial.print(error);
+  Serial.print(", diff: ");
+  Serial.print(diff);
+  Serial.print(", left speed: ");
   Serial.print(left_motor_speed);
   Serial.print(", right speed: ");
-  Serial.print(right_motor_speed);
-  Serial.print(", error: ");
-  Serial.print(error);
-  Serial.print(", adjust: ");
-  Serial.println(adjust);
+  Serial.println(right_motor_speed);
 #endif
 }
