@@ -1,7 +1,7 @@
 #include "Arduino.h"
 #include "TB6612.h"
 
-void TB6612::begin() {
+TB6612::TB6612() {
   pinMode(pwmA, OUTPUT);
   pinMode(pwmB, OUTPUT);
   analogWrite(pwmA, 0);

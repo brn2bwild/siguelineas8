@@ -10,22 +10,22 @@
 #define DEBUG
 
 /* Estas constantes para el control PID */
-#define KP 0.03  // 0.07 con velocidad de 200
-#define KI 0.0   //0 con velocidad de 200
-#define KD 0.4   //0.645 con velocidad de 200
-#define SETPOINT 3500
-#define OBJECTIVE 3450
+const int KP = 0.03;  // 0.07 con velocidad de 200
+const int KI = 0.0;   //0 con velocidad de 200
+const int KD = 0.4;   //0.645 con velocidad de 200
+const int SETPOINT = 3500;
+const int OBJECTIVE = 3450;
 
 /* Velocidades del siguelíneas */
-#define MAX_SPEED 140  // 230 de velocidad funcional
-#define MIN_SPEED (-1) * MAX_SPEED
-#define BRAKE_SPEED 140
+const int MAX_SPEED = 140;  // 230 de velocidad funcional
+const int MIN_SPEED = MAX_SPEED * -1;
+const int BRAKE_SPEED = 140;
 
 /* Valor para el diff */
-#define MAX_PWM 255
+const int MAX_PWM = 255;
 
 /* Cantidad de sensores de la tarjeta */
-#define SENSORS_NUM 8
+const int SENSORS_NUM = 8;
 
 QTRSensors qtr;
 TB6612 puenteh;
@@ -33,7 +33,7 @@ TB6612 puenteh;
 /* Se declara el arreglo para los sensores */
 uint16_t SenIR[SENSORS_NUM];
 
-int error, last_error, integral, derivative, left_motor_speed, right_motor_speed;
+int error, last_position, integral, derivative, left_motor_speed, right_motor_speed;
 
 void setup() {
   pinMode(BUTTON, INPUT);
@@ -41,10 +41,6 @@ void setup() {
   pinMode(LEDS, OUTPUT);
 
   digitalWrite(QTR_LEDS, HIGH);
-
-#ifndef DEBUG
-  puenteh.begin();
-#endif
 
 #ifdef DEBUG
   Serial.begin(9600);
@@ -87,9 +83,9 @@ void loop() {
   // Serial.println(position);
 
 
-  error = SETPOINT - position;
+  error = position - SETPOINT;
 
-/* Estas líneas hacen falta para implementar el freno en las curvas más complicadas*/
+/* Estas líneas implementan el freno en las curvas más complicadas*/
 #ifndef DEBUG
   if (error <= -OBJECTIVE) {
     puenteh.motores(-BRAKE_SPEED, BRAKE_SPEED);
@@ -98,16 +94,13 @@ void loop() {
   }
 #endif
 
-  derivative = error - last_error;
+  derivative = position - last_position;
 
   // integral += error;
 
-  // integral = constrain(integral, 0, MAX_PWM);
-
   int diff = (KP * error) + (KD * derivative);
 
-  // diff = constrain(diff, -MAX_PWM, MAX_PWM);
-  last_error = error;
+  last_position = position;
 
   left_motor_speed = constrain(MAX_SPEED + diff, MIN_SPEED, MAX_SPEED);
   right_motor_speed = constrain(MAX_SPEED - diff, MIN_SPEED, MAX_SPEED);

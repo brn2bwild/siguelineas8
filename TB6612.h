@@ -12,7 +12,8 @@ public:
   const uint8_t bin2 = 8;
   const uint8_t pwmB = 6;
 
-  void begin();
+  // void begin();
+  TB6612();
   void motorIzq(int velocidad);
   void motorDer(int velocidad);
   void motores(int velIzq, int velDer);
