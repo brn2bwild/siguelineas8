@@ -7,12 +7,12 @@
 #define BUTTON 12
 
 /* Descomentar esta línea para debuggear el código*/
-#define DEBUG
+// #define DEBUG
 
 /* Estas constantes para el control PID */
-const int KP = 0.03;  // 0.07 con velocidad de 200
-const int KI = 0.0;   //0 con velocidad de 200
-const int KD = 0.4;   //0.645 con velocidad de 200
+const float KP = 0.3;  // 0.07 con velocidad de 200
+const float KI = 0.0;   //0 con velocidad de 200
+const float KD = 0.4;   //0.645 con velocidad de 200
 const int SETPOINT = 3500;
 const int OBJECTIVE = 3450;
 
@@ -102,8 +102,8 @@ void loop() {
 
   last_position = position;
 
-  left_motor_speed = constrain(MAX_SPEED + diff, MIN_SPEED, MAX_SPEED);
-  right_motor_speed = constrain(MAX_SPEED - diff, MIN_SPEED, MAX_SPEED);
+  left_motor_speed = constrain(MAX_SPEED - diff, MIN_SPEED, MAX_SPEED);
+  right_motor_speed = constrain(MAX_SPEED + diff, MIN_SPEED, MAX_SPEED);
 
 #ifndef DEBUG
   puenteh.motores(left_motor_speed, right_motor_speed);
