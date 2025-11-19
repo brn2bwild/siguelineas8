@@ -10,16 +10,16 @@
 // #define DEBUG
 
 /* Estas constantes para el control PID */
-const float KP = 0.3;  // 0.07 con velocidad de 200
+const float KP = 0.2;  // 0.07 con velocidad de 200
 const float KI = 0.0;   //0 con velocidad de 200
-const float KD = 0.4;   //0.645 con velocidad de 200
+const float KD = 0.5;   //0.645 con velocidad de 200
 const int SETPOINT = 3500;
 const int OBJECTIVE = 3450;
 
 /* Velocidades del siguelíneas */
-const int MAX_SPEED = 140;  // 230 de velocidad funcional
+const int MAX_SPEED = 70;  // 230 de velocidad funcional
 const int MIN_SPEED = MAX_SPEED * -1;
-const int BRAKE_SPEED = 140;
+const int BRAKE_SPEED = 70;
 
 /* Valor para el diff */
 const int MAX_PWM = 255;
@@ -82,7 +82,6 @@ void loop() {
   // }
   // Serial.println(position);
 
-
   error = position - SETPOINT;
 
 /* Estas líneas implementan el freno en las curvas más complicadas*/
@@ -98,15 +97,15 @@ void loop() {
 
   // integral += error;
 
-  int diff = (KP * error) + (KD * derivative);
+  int diff = int(KP * error + KD * derivative);
 
   last_position = position;
 
-  left_motor_speed = constrain(MAX_SPEED - diff, MIN_SPEED, MAX_SPEED);
-  right_motor_speed = constrain(MAX_SPEED + diff, MIN_SPEED, MAX_SPEED);
+  // left_motor_speed = constrain(MAX_SPEED - diff, MIN_SPEED, MAX_SPEED);
+  // right_motor_speed = constrain(MAX_SPEED + diff, MIN_SPEED, MAX_SPEED);
 
 #ifndef DEBUG
-  puenteh.motores(left_motor_speed, right_motor_speed);
+  puenteh.motores(constrain(MAX_SPEED - diff, MIN_SPEED, MAX_SPEED), constrain(MAX_SPEED + diff, MIN_SPEED, MAX_SPEED));
 #endif
 
   /* Esta parte sirve para comprobar los valores de las velocidades */
