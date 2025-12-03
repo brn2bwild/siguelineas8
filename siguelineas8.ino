@@ -11,10 +11,9 @@
 
 /* Estas constantes para el control PID */
 const float KP = 0.2;  // 0.07 con velocidad de 200
-const float KI = 0.0;   //0 con velocidad de 200
-const float KD = 0.5;   //0.645 con velocidad de 200
+const float KI = 0.0;  //0 con velocidad de 200
+const float KD = 0.5;  //0.645 con velocidad de 200
 const int SETPOINT = 3500;
-const int OBJECTIVE = 3450;
 
 /* Velocidades del siguelíneas */
 const int MAX_SPEED = 70;  // 230 de velocidad funcional
@@ -37,10 +36,10 @@ int error, last_position, integral, derivative, left_motor_speed, right_motor_sp
 
 void setup() {
   pinMode(BUTTON, INPUT);
-  pinMode(QTR_LEDS, OUTPUT);
+  // pinMode(QTR_LEDS, OUTPUT);
   pinMode(LEDS, OUTPUT);
 
-  digitalWrite(QTR_LEDS, HIGH);
+  // digitalWrite(QTR_LEDS, HIGH);
 
 #ifdef DEBUG
   Serial.begin(9600);
@@ -49,6 +48,7 @@ void setup() {
 
   qtr.setTypeAnalog();
   qtr.setSensorPins((const uint8_t[]){ A7, A0, A1, A2, A3, A4, A5, A6 }, SENSORS_NUM);
+  qtr.setEmitterPin(QTR_LEDS);
   delay(500);
 
   while (digitalRead(BUTTON)) {
@@ -72,7 +72,7 @@ void setup() {
 }
 
 void loop() {
-  unsigned int position = qtr.readLineBlack(SenIR);
+  uint16_t position = qtr.readLineBlack(SenIR);
 
   /* Esta parte sirve para comprobar que los sensores están leyendo correctamente */
   // qtr.read(SenIR);
@@ -86,18 +86,19 @@ void loop() {
 
 /* Estas líneas implementan el freno en las curvas más complicadas*/
 #ifndef DEBUG
-  if (error <= -OBJECTIVE) {
+  if (error <= -SETPOINT) {
     puenteh.motores(-BRAKE_SPEED, BRAKE_SPEED);
-  } else if (error >= OBJECTIVE) {
+  } else if (error >= SETPOINT) {
     puenteh.motores(BRAKE_SPEED, -BRAKE_SPEED);
   }
 #endif
 
   derivative = position - last_position;
 
-  // integral += error;
+  integral += (KI * error);
+  integral = constrain(integral, -1000, 1000);
 
-  int diff = int(KP * error + KD * derivative);
+  int diff = (KP * error) + integral + (KD * derivative);
 
   last_position = position;
 
@@ -105,7 +106,7 @@ void loop() {
   // right_motor_speed = constrain(MAX_SPEED + diff, MIN_SPEED, MAX_SPEED);
 
 #ifndef DEBUG
-  puenteh.motores(constrain(MAX_SPEED - diff, MIN_SPEED, MAX_SPEED), constrain(MAX_SPEED + diff, MIN_SPEED, MAX_SPEED));
+  (diff > 0) ? puenteh.motores(MAX_SPEED - diff, MAX_SPEED) : puenteh.motores(MAX_SPEED, MAX_SPEED + diff);
 #endif
 
   /* Esta parte sirve para comprobar los valores de las velocidades */
@@ -115,8 +116,8 @@ void loop() {
   Serial.print(", diff: ");
   Serial.print(diff);
   Serial.print(", left speed: ");
-  Serial.print(left_motor_speed);
+  Serial.print(MAX_SPEED - diff);
   Serial.print(", right speed: ");
-  Serial.println(right_motor_speed);
+  Serial.println(MAX_SPEED + diff);
 #endif
 }
