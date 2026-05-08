@@ -5,18 +5,19 @@
 #define LEDS 13
 #define QTR_LEDS 11
 #define BUTTON 12
+#define GO 10
 
 /* Descomentar esta línea para debuggear el código*/
-// #define DEBUG
+#define DEBUG
 
 /* Estas constantes para el control PID */
-const float KP = 0.2;  // 0.07 con velocidad de 200
-const float KI = 0.0;  //0 con velocidad de 200
-const float KD = 0.5;  //0.645 con velocidad de 200
+const float KP = 0.04;  // 0.04 con velocidad de 90
+const float KI = 0.0;   //0 con velocidad de 90
+const float KD = 0.11;  //0.11 con velocidad de 90
 const int SETPOINT = 3500;
 
 /* Velocidades del siguelíneas */
-const int MAX_SPEED = 70;  // 230 de velocidad funcional
+const int MAX_SPEED = 50;  // maxima velocidad alcanzada 90
 const int MIN_SPEED = MAX_SPEED * (-1);
 const int BRAKE_SPEED = 255;
 
@@ -29,7 +30,7 @@ TB6612 puenteh;
 /* Se declara el arreglo para los sensores */
 uint16_t SenIR[SENSORS_NUM];
 
-uint16_t position;
+float position;
 float error = 0.0, last_error = 0.0;
 float error1 = 0, error2 = 0, error3 = 0, error4 = 0, error5 = 0, error6 = 0;
 float integral = 0.0;
@@ -40,6 +41,7 @@ int left_motor_speed, right_motor_speed;
 
 void setup() {
   pinMode(BUTTON, INPUT);
+  pinMode(GO, INPUT);
   pinMode(QTR_LEDS, OUTPUT);
   pinMode(LEDS, OUTPUT);
 
@@ -60,7 +62,7 @@ void setup() {
     delay(500);
   }
 
-  for (uint16_t i = 0; i < 120; i++) {
+  for (uint16_t i = 0; i < 60; i++) {
     digitalWrite(LEDS, HIGH);
     delay(20);
     qtr.calibrate();
@@ -70,12 +72,11 @@ void setup() {
 
   digitalWrite(LEDS, HIGH);
 
-  while (digitalRead(BUTTON)) {};
+  while (!digitalRead(GO)) {}
 
-  delay(1000);
+  // delay(1000);
 }
 
-#ifdef DEBUG
 void printQtrData() {
   /* Esta parte sirve para comprobar que los sensores están leyendo correctamente */
   qtr.read(SenIR);
@@ -85,7 +86,6 @@ void printQtrData() {
   }
   Serial.println(position);
 }
-#endif
 
 void computePID() {
   position = qtr.readLineBlack(SenIR);
@@ -115,21 +115,29 @@ void driveMotors() {
   (pid_output > 0) ? puenteh.motores(left_motor_speed, MAX_SPEED) : puenteh.motores(MAX_SPEED, right_motor_speed);
 }
 
-#ifdef DEBUG
-void printPIDDAta() {
+void printPIDData() {
   Serial.print("error: ");
   Serial.print(error);
   Serial.print(", pid_output: ");
   Serial.print(pid_output);
   Serial.print(", left speed: ");
-  Serial.print(MAX_SPEED - pid_output);
+  Serial.print(constrain(MAX_SPEED - pid_output, MIN_SPEED, MAX_SPEED));
   Serial.print(", right speed: ");
-  Serial.println(MAX_SPEED + pid_output);
+  Serial.print(constrain(MAX_SPEED + pid_output, MIN_SPEED, MAX_SPEED));
+  Serial.println();
 }
-#endif
 
 void loop() {
-  computePID();
+  while (digitalRead(GO)) {
 
-  driveMotors();
+    computePID();
+
+    driveMotors();
+  }
+
+  while (!digitalRead(GO)) {
+
+    puenteh.motores(0, 0);
+  }
+  // printPIDData();
 }
